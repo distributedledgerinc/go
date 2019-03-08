@@ -72,6 +72,7 @@ type ClientInterface interface {
 	Assets(request AssetRequest) (AssetsPage, error)
 	Ledgers(request LedgerRequest) (LedgersPage, error)
 	LedgerDetail(sequence uint32) (Ledger, error)
+	Metrics() (Metrics, error)
 	Stream(ctx context.Context, request StreamRequest, handler func(interface{})) error
 }
 
