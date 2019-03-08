@@ -50,7 +50,6 @@ func NewInflationDestination(ai string) *string {
 // SetOptions represents the Stellar set options operation. See
 // https://www.stellar.org/developers/guides/concepts/list-of-operations.html
 type SetOptions struct {
-	destAccountID        xdr.AccountId
 	InflationDestination *string
 	SetFlags             []AccountFlag
 	ClearFlags           []AccountFlag
@@ -99,11 +98,12 @@ func (so *SetOptions) BuildXDR() (xdr.Operation, error) {
 // Once set, a new address can be set, but there's no way to ever unset.
 func (so *SetOptions) handleInflation() (err error) {
 	if so.InflationDestination != nil {
-		err = so.destAccountID.SetAddress(*so.InflationDestination)
+		var xdrAccountID xdr.AccountId
+		err = xdrAccountID.SetAddress(*so.InflationDestination)
 		if err != nil {
 			return
 		}
-		so.xdrOp.InflationDest = &so.destAccountID
+		so.xdrOp.InflationDest = &xdrAccountID
 	}
 	return
 }
@@ -185,7 +185,6 @@ func (so *SetOptions) handleHomeDomain() error {
 // handleSigner for SetOptions sets the XDR value of a signer for the account.
 // See https://www.stellar.org/developers/guides/concepts/multi-sig.html
 func (so *SetOptions) handleSigner() (err error) {
-	// TODO: Validate address
 	if so.Signer != nil {
 		var xdrSigner xdr.Signer
 		xdrWeight := xdr.Uint32(so.Signer.Weight)
