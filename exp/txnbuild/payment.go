@@ -11,9 +11,8 @@ import (
 type Payment struct {
 	Destination   string
 	Amount        string
-	Asset         string // TODO: Not used yet
+	Asset         Asset
 	destAccountID xdr.AccountId
-	xdrAsset      xdr.Asset
 	xdrOp         xdr.PaymentOp
 }
 
@@ -30,11 +29,11 @@ func (p *Payment) BuildXDR() (xdr.Operation, error) {
 		return xdr.Operation{}, errors.Wrap(err, "Failed to parse amount")
 	}
 
-	// TODO: Generalise to non-native currencies
-	p.xdrAsset, err = xdr.NewAsset(xdr.AssetTypeAssetTypeNative, nil)
+	xdrAsset, err := p.Asset.ToXDR()
 	if err != nil {
 		return xdr.Operation{}, errors.Wrap(err, "Failed to set asset type")
 	}
+	p.xdrOp.Asset = xdrAsset
 
 	opType := xdr.OperationTypePayment
 	body, err := xdr.NewOperationBody(opType, p.xdrOp)
