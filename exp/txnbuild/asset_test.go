@@ -20,7 +20,6 @@ func TestNativeAssetToXDR(t *testing.T) {
 }
 
 func TestAlphaNum4AssetToXDR(t *testing.T) {
-
 	asset := Asset{
 		Code:   "USD",
 		Issuer: newKeypair0().Address(),
@@ -39,4 +38,52 @@ func TestAlphaNum4AssetToXDR(t *testing.T) {
 			Issuer:    xdrIssuer,
 		}}
 	assert.Equal(t, expected, received)
+}
+
+func TestAlphaNum12AssetToXDR(t *testing.T) {
+	asset := Asset{
+		Code:   "MEGAUSD",
+		Issuer: newKeypair0().Address(),
+	}
+	var xdrAssetCode [12]byte
+	copy(xdrAssetCode[:], asset.Code)
+	var xdrIssuer xdr.AccountId
+	require.NoError(t, xdrIssuer.SetAddress(asset.Issuer))
+
+	received, err := asset.ToXDR()
+	assert.Nil(t, err)
+
+	expected := xdr.Asset{Type: xdr.AssetTypeAssetTypeCreditAlphanum12,
+		AlphaNum12: &xdr.AssetAlphaNum12{
+			AssetCode: xdrAssetCode,
+			Issuer:    xdrIssuer,
+		}}
+	assert.Equal(t, expected, received)
+}
+
+func TestBadCode(t *testing.T) {
+	asset := Asset{
+		Code:   "THIRTEENCHARS",
+		Issuer: newKeypair0().Address(),
+	}
+	var xdrAssetCode [12]byte
+	copy(xdrAssetCode[:], asset.Code)
+	var xdrIssuer xdr.AccountId
+	require.NoError(t, xdrIssuer.SetAddress(asset.Issuer))
+
+	_, err := asset.ToXDR()
+	expectedErrMsg := "Asset code length must be between 1 and 12 characters"
+	require.EqualError(t, err, expectedErrMsg)
+}
+
+func TestBadIssuer(t *testing.T) {
+	asset := Asset{
+		Code:   "USD",
+		Issuer: "DOESNTLOOKLIKEANADDRESS",
+	}
+	var xdrAssetCode [4]byte
+	copy(xdrAssetCode[:], asset.Code)
+	var xdrIssuer xdr.AccountId
+	expectedErrMsg := "base32 decode failed: illegal base32 data at input byte 16"
+	require.EqualError(t, xdrIssuer.SetAddress(asset.Issuer), expectedErrMsg)
 }
