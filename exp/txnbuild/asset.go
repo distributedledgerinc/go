@@ -14,8 +14,8 @@ type Asset struct {
 // ToXDR for Asset produces a corresponding XDR asset.
 func (a *Asset) ToXDR() (xdr.Asset, error) {
 
-	// Native (Lumens) has no code, and is a no-op
-	if a.Code == "" {
+	// Native (Lumens) has no code or issuer, and is a no-op
+	if a.Code == "" && a.Issuer == "" {
 		return xdr.NewAsset(xdr.AssetTypeAssetTypeNative, nil)
 	}
 
