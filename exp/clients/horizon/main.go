@@ -133,3 +133,7 @@ type LedgerRequest struct {
 	Limit       Limit
 	forSequence uint32
 }
+
+type metricsRequest struct {
+	endpoint string
+}

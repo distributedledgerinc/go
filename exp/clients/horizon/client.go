@@ -108,22 +108,7 @@ func (c *Client) LedgerDetail(sequence uint32) (ledger Ledger, err error) {
 // Metrics returns monitoring information about a horizon server
 // See https://www.stellar.org/developers/horizon/reference/endpoints/metrics.html
 func (c *Client) Metrics() (metrics Metrics, err error) {
-
-	endpoint := "metrics"
-	req, err := http.NewRequest("GET", c.HorizonURL+endpoint, nil)
-	if err != nil {
-		err = errors.Wrap(err, "Error creating HTTP request")
-		return
-	}
-	req.Header.Set("X-Client-Name", "go-stellar-sdk")
-	req.Header.Set("X-Client-Version", app.Version())
-
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return
-	}
-
-	err = decodeResponse(resp, &metrics)
+	request := metricsRequest{endpoint: "metrics"}
+	err = c.sendRequest(request, &metrics)
 	return
-
 }
