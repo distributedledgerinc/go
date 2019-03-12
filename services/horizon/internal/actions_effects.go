@@ -11,6 +11,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/resourceadapter"
 	"github.com/stellar/go/support/errors"
 	"github.com/stellar/go/support/render/hal"
+	"github.com/stellar/go/support/render/problem"
 )
 
 // This file contains the actions:
@@ -114,15 +115,27 @@ func (action *EffectIndexAction) loadParams() {
 func (action *EffectIndexAction) loadRecords() {
 	effects := action.HistoryQ().Effects()
 
-	switch {
-	case action.AccountFilter != "":
+	filters := 0
+	if action.AccountFilter != "" {
 		effects.ForAccount(action.AccountFilter)
-	case action.LedgerFilter > 0:
+		filters++
+	}
+	if action.LedgerFilter > 0 {
 		effects.ForLedger(action.LedgerFilter)
-	case action.OperationFilter > 0:
+		filters++
+	}
+	if action.OperationFilter > 0 {
 		effects.ForOperation(action.OperationFilter)
-	case action.TransactionFilter != "":
+		filters++
+	}
+	if action.TransactionFilter != "" {
 		effects.ForTransaction(action.TransactionFilter)
+		filters++
+	}
+
+	if filters > 1 {
+		action.Err = problem.BadRequest
+		return
 	}
 
 	action.Err = effects.Page(action.PagingParams).Select(&action.Records)

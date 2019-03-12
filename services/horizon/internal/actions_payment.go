@@ -88,7 +88,7 @@ func (action *PaymentsIndexAction) loadParams() {
 	action.ValidateCursorAsDefault()
 	action.AccountFilter = action.GetAddress("account_id")
 	action.LedgerFilter = action.GetInt32("ledger_id")
-	action.TransactionFilter = action.GetString("tx_id")
+	action.TransactionFilter = action.GetStringFromURLParam("tx_id")
 	action.PagingParams = action.GetPageQuery()
 	action.IncludeFailed = action.GetBool("include_failed")
 
@@ -104,13 +104,23 @@ func (action *PaymentsIndexAction) loadRecords() {
 	q := action.HistoryQ()
 	ops := q.Operations().OnlyPayments()
 
-	switch {
-	case action.AccountFilter != "":
+	filters := 0
+	if action.AccountFilter != "" {
 		ops.ForAccount(action.AccountFilter)
-	case action.LedgerFilter > 0:
+		filters++
+	}
+	if action.LedgerFilter > 0 {
 		ops.ForLedger(action.LedgerFilter)
-	case action.TransactionFilter != "":
+		filters++
+	}
+	if action.TransactionFilter != "" {
 		ops.ForTransaction(action.TransactionFilter)
+		filters++
+	}
+
+	if filters > 1 {
+		action.Err = supportProblem.BadRequest
+		return
 	}
 
 	// When querying operations for transaction return both successful

@@ -94,11 +94,19 @@ func (action *TransactionIndexAction) loadRecords() {
 	q := action.HistoryQ()
 	txs := q.Transactions()
 
-	switch {
-	case action.AccountFilter != "":
+	filters := 0
+	if action.AccountFilter != "" {
 		txs.ForAccount(action.AccountFilter)
-	case action.LedgerFilter > 0:
+		filters++
+	}
+	if action.LedgerFilter > 0 {
 		txs.ForLedger(action.LedgerFilter)
+		filters++
+	}
+
+	if filters > 1 {
+		action.Err = problem.BadRequest
+		return
 	}
 
 	if action.IncludeFailed {

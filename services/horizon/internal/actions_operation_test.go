@@ -243,3 +243,32 @@ func TestOperation_BumpSequence(t *testing.T) {
 		ht.Assert.Equal("300000000003", result.BumpTo)
 	}
 }
+
+// TestOperationActions_Show_Extra_TxID tests if failed transactions are not returned
+// when `tx_id` GET param is present. This was happening because `base.GetString()`
+// method retuns values from the query when URL param is not present.
+func TestOperationActions_Show_Extra_TxID(t *testing.T) {
+	ht := StartHTTPTest(t, "failed_transactions")
+	defer ht.Finish()
+
+	w := ht.Get("/accounts/GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAJAUEQFU6LPCSEFVXON/operations?limit=200&tx_id=abc")
+
+	if ht.Assert.Equal(200, w.Code) {
+		records := []operations.Base{}
+		ht.UnmarshalPage(w.Body, &records)
+
+		successful := 0
+		failed := 0
+
+		for _, op := range records {
+			if op.TransactionSuccessful {
+				successful++
+			} else {
+				failed++
+			}
+		}
+
+		ht.Assert.Equal(3, successful)
+		ht.Assert.Equal(0, failed)
+	}
+}
